@@ -1,0 +1,591 @@
+name: bgp-lab
+
+topology:
+  ############################################################################
+  ### NODES ##################################################################
+  ############################################################################
+
+  nodes:
+    ############################################################################
+    ### LAB POP 1 ##############################################################
+    ############################################################################
+
+    router01.lab01:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Forwarding
+        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv6.conf.all.forwarding=1
+        # ECMP hash policy
+        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv6.fib_multipath_hash_policy=1
+        # Loopback
+        - ip address add 10.1.254.1/32 dev lo
+        - ip address add fc00:a:1::254:1/128 dev lo
+        # Interface towards server01.lab01
+        - ip address add 10.1.1.1/30 dev eth1
+        - ip address add fc00:a:1::1:1/126 dev eth1
+        - ip link set eth1 up
+        # Interface towards server02.lab01
+        - ip address add 10.1.2.1/30 dev eth2
+        - ip address add fc00:a:1::2:1/126 dev eth2
+        - ip link set eth2 up
+        # Interface towards server03.lab01
+        - ip address add 10.1.3.1/30 dev eth3
+        - ip address add fc00:a:1::3:1/126 dev eth3
+        - ip link set eth3 up
+        # Transit interface towards router01.tra01
+        - ip address add 10.101.0.2/30 dev eth4
+        - ip address add fc00:b:101::2/126 dev eth4
+        - ip link set eth4 up
+        # Bird
+        - bird
+      binds:
+        - bird-configs/router01.lab01.conf:/etc/bird.conf
+
+    server01.lab01:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Loopback
+        - ip address add 10.1.255.1/32 dev lo
+        - ip address add fc00:a:1::255:1/128 dev lo
+        # Interface towards router01.lab01
+        - ip address add 10.1.1.2/30 dev eth1
+        - ip address add fc00:a:1::1:2/126 dev eth1
+        - ip link set eth1 up
+        # Colo-level anycast
+        - ip address add 10.201.1.0/24 dev lo
+        - ip address add 10.201.2.0/24 dev lo
+        - ip address add fc00:c001:1:1::/64 dev lo
+        - ip address add fc00:c001:1:2::/64 dev lo
+        # Global anycast
+        - ip address add 10.200.1.0/24 dev lo
+        - ip address add 10.200.2.0/24 dev lo
+        - ip address add fc00:910b:1::/64 dev lo
+        - ip address add fc00:910b:2::/64 dev lo
+        # Bird
+        - bird
+      binds:
+        - bird-configs/server01.lab01.conf:/etc/bird.conf
+
+    server02.lab01:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Loopback
+        - ip address add 10.1.255.2/32 dev lo
+        - ip address add fc00:a:1::255:2/128 dev lo
+        # Interface towards router01.lab01
+        - ip address add 10.1.2.2/30 dev eth1
+        - ip address add fc00:a:1::2:2/126 dev eth1
+        - ip link set eth1 up
+        # Colo-level anycast
+        - ip address add 10.201.2.0/24 dev lo
+        - ip address add 10.201.3.0/24 dev lo
+        - ip address add fc00:c001:1:2::/64 dev lo
+        - ip address add fc00:c001:1:3::/64 dev lo
+        # Global anycast
+        - ip address add 10.200.2.0/24 dev lo
+        - ip address add 10.200.3.0/24 dev lo
+        - ip address add fc00:910b:2::/64 dev lo
+        - ip address add fc00:910b:3::/64 dev lo
+        # Bird
+        - bird
+      binds:
+        - bird-configs/server02.lab01.conf:/etc/bird.conf
+
+    server03.lab01:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Loopback
+        - ip address add 10.1.255.3/32 dev lo
+        - ip address add fc00:a:1::255:3/128 dev lo
+        # Interface towards router01.lab01
+        - ip address add 10.1.3.2/30 dev eth1
+        - ip address add fc00:a:1::3:2/126 dev eth1
+        - ip link set eth1 up
+        # Colo-level anycast
+        - ip address add 10.201.1.0/24 dev lo
+        - ip address add 10.201.3.0/24 dev lo
+        - ip address add fc00:c001:1:1::/64 dev lo
+        - ip address add fc00:c001:1:3::/64 dev lo
+        # Global anycast
+        - ip address add 10.200.1.0/24 dev lo
+        - ip address add 10.200.3.0/24 dev lo
+        - ip address add fc00:910b:1::/64 dev lo
+        - ip address add fc00:910b:3::/64 dev lo
+        # Bird
+        - bird
+      binds:
+        - bird-configs/server03.lab01.conf:/etc/bird.conf
+
+    ############################################################################
+    ### LAB POP 2 ##############################################################
+    ############################################################################
+
+    router01.lab02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Forwarding
+        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv6.conf.all.forwarding=1
+        # ECMP hash policy
+        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv6.fib_multipath_hash_policy=1
+        # Loopback
+        - ip address add 10.2.254.1/32 dev lo
+        - ip address add fc00:a:2::254:1/128 dev lo
+        # Interface towards server01.lab02
+        - ip address add 10.2.1.1/30 dev eth1
+        - ip address add fc00:a:2::1:1/126 dev eth1
+        - ip link set eth1 up
+        # Interface towards server02.lab02
+        - ip address add 10.2.2.1/30 dev eth2
+        - ip address add fc00:a:2::2:1/126 dev eth2
+        - ip link set eth2 up
+        # Interface towards server03.lab02
+        - ip address add 10.2.3.1/30 dev eth3
+        - ip address add fc00:a:2::3:1/126 dev eth3
+        - ip link set eth3 up
+        # Transit interface towards router01.tra03
+        - ip address add 10.103.0.2/30 dev eth4
+        - ip address add fc00:b:103::2/126 dev eth4
+        - ip link set eth4 up
+        # Bird
+        - bird
+      binds:
+        - bird-configs/router01.lab02.conf:/etc/bird.conf
+
+    server01.lab02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Loopback
+        - ip address add 10.2.255.1/32 dev lo
+        - ip address add fc00:a:2::255:1/128 dev lo
+        # Interface towards router01.lab02
+        - ip address add 10.2.1.2/30 dev eth1
+        - ip address add fc00:a:2::1:2/126 dev eth1
+        - ip link set eth1 up
+        # Colo-level anycast
+        - ip address add 10.202.1.0/24 dev lo
+        - ip address add 10.202.2.0/24 dev lo
+        - ip address add fc00:c001:2:1::/64 dev lo
+        - ip address add fc00:c001:2:2::/64 dev lo
+        # Global anycast
+        - ip address add 10.200.1.0/24 dev lo
+        - ip address add 10.200.2.0/24 dev lo
+        - ip address add fc00:910b:1::/64 dev lo
+        - ip address add fc00:910b:2::/64 dev lo
+        # Bird
+        - bird
+      binds:
+        - bird-configs/server01.lab02.conf:/etc/bird.conf
+
+    server02.lab02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Loopback
+        - ip address add 10.2.255.2/32 dev lo
+        - ip address add fc00:a:2::255:2/128 dev lo
+        # Interface towards router01.lab02
+        - ip address add 10.2.2.2/30 dev eth1
+        - ip address add fc00:a:2::2:2/126 dev eth1
+        - ip link set eth1 up
+        # Colo-level anycast
+        - ip address add 10.202.2.0/24 dev lo
+        - ip address add 10.202.3.0/24 dev lo
+        - ip address add fc00:c001:2:2::/64 dev lo
+        - ip address add fc00:c001:2:3::/64 dev lo
+        # Global anycast
+        - ip address add 10.200.2.0/24 dev lo
+        - ip address add 10.200.3.0/24 dev lo
+        - ip address add fc00:910b:2::/64 dev lo
+        - ip address add fc00:910b:3::/64 dev lo
+        # Bird
+        - bird
+      binds:
+        - bird-configs/server02.lab02.conf:/etc/bird.conf
+
+    server03.lab02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Loopback
+        - ip address add 10.2.255.3/32 dev lo
+        - ip address add fc00:a:2::255:3/128 dev lo
+        # Interface towards router01.lab02
+        - ip address add 10.2.3.2/30 dev eth1
+        - ip address add fc00:a:2::3:2/126 dev eth1
+        - ip link set eth1 up
+        # Colo-level anycast
+        - ip address add 10.202.1.0/24 dev lo
+        - ip address add 10.202.3.0/24 dev lo
+        - ip address add fc00:c001:2:1::/64 dev lo
+        - ip address add fc00:c001:2:3::/64 dev lo
+        # Global anycast
+        - ip address add 10.200.1.0/24 dev lo
+        - ip address add 10.200.3.0/24 dev lo
+        - ip address add fc00:910b:1::/64 dev lo
+        - ip address add fc00:910b:3::/64 dev lo
+        # Bird
+        - bird
+      binds:
+        - bird-configs/server03.lab02.conf:/etc/bird.conf
+
+    ############################################################################
+    ### TRANSIT ROUTERS ########################################################
+    ############################################################################
+
+    router01.tra01:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Forwarding
+        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv6.conf.all.forwarding=1
+        # ECMP hash policy
+        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv6.fib_multipath_hash_policy=1
+        # Loopback
+        - ip address add 10.101.254.1/32 dev lo
+        - ip address add fc00:b:101::254:1/128 dev lo
+        # Interface towards router01.lab01
+        - ip address add 10.101.0.1/30 dev eth1
+        - ip address add fc00:b:101::1/126 dev eth1
+        - ip link set eth1 up
+        # Interface towards router01.tra02
+        - ip address add 10.102.101.2/30 dev eth2
+        - ip address add fc00:b:102::101:2/126 dev eth2
+        - ip link set eth2 up
+        # Interface towards eyeball01.tra01
+        - ip address add 192.168.1.1/24 dev eth3
+        - ip address add fc00:b:101:beef::1/64 dev eth3
+        - ip link set eth3 up
+        # Bird
+        - bird
+      binds:
+        - bird-configs/router01.tra01.conf:/etc/bird.conf
+
+    router01.tra02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Forwarding
+        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv6.conf.all.forwarding=1
+        # ECMP hash policy
+        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv6.fib_multipath_hash_policy=1
+        # Loopback
+        - ip address add 10.102.254.1/32 dev lo
+        - ip address add fc00:b:102::254:1/128 dev lo
+        # Interface towards router01.tra01
+        - ip address add 10.102.101.1/30 dev eth1
+        - ip address add fc00:b:102::101:1/126 dev eth1
+        - ip link set eth1 up
+        # Interface towards router02.tra02
+        - ip address add 10.102.12.1/30 dev eth2
+        - ip address add fc00:b:102::12:1/126 dev eth2
+        - ip link set eth2 up
+        # Interface towards router03.tra02
+        - ip address add 10.102.13.1/30 dev eth3
+        - ip address add fc00:b:102::13:1/126 dev eth3
+        - ip link set eth3 up
+        # Bird
+        - bird
+      binds:
+        - bird-configs/router01.tra02.conf:/etc/bird.conf
+
+    router02.tra02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Forwarding
+        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv6.conf.all.forwarding=1
+        # ECMP hash policy
+        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv6.fib_multipath_hash_policy=1
+        # Loopback
+        - ip address add 10.102.254.2/32 dev lo
+        - ip address add fc00:b:102::254:2/128 dev lo
+        # Interface towards router01.tra03
+        - ip address add 10.102.103.1/30 dev eth1
+        - ip address add fc00:b:102::103:1/126 dev eth1
+        - ip link set eth1 up
+        # Interface towards router01.tra02
+        - ip address add 10.102.12.2/30 dev eth2
+        - ip address add fc00:b:102::12:2/126 dev eth2
+        - ip link set eth1 up
+        # Interface towards router03.tra02
+        - ip address add 10.102.23.1/30 dev eth3
+        - ip address add fc00:b:102::23:1/126 dev eth3
+        - ip link set eth1 up
+        # Bird
+        - bird
+      binds:
+        - bird-configs/router02.tra02.conf:/etc/bird.conf
+
+    router03.tra02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Forwarding
+        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv6.conf.all.forwarding=1
+        # ECMP hash policy
+        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv6.fib_multipath_hash_policy=1
+        # Loopback
+        - ip address add 10.102.254.3/32 dev lo
+        - ip address add fc00:b:102::254:3/128 dev lo
+        # Interface towards router01.tra02
+        - ip address add 10.102.13.2/30 dev eth1
+        - ip address add fc00:b:102::13:2/126 dev eth1
+        - ip link set eth1 up
+        # Interface towards router02.tra02
+        - ip address add 10.102.23.2/30 dev eth2
+        - ip address add fc00:b:102::23:2/126 dev eth2
+        - ip link set eth2 up
+        # Interface towards eyeball01.tra02
+        - ip address add 192.168.2.1/24 dev eth3
+        - ip address add fc00:b:102:beef::1/64 dev eth3
+        - ip link set eth3 up
+        # Bird
+        - bird
+      binds:
+        - bird-configs/router03.tra02.conf:/etc/bird.conf
+
+    router01.tra03:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2 bird
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Forwarding
+        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv6.conf.all.forwarding=1
+        # ECMP hash policy
+        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv6.fib_multipath_hash_policy=1
+        # Loopback
+        - ip address add 10.103.254.1/32 dev lo
+        - ip address add fc00:b:103::254:1/128 dev lo
+        # Interface towards router01.lab02
+        - ip address add 10.103.0.1/30 dev eth1
+        - ip address add fc00:b:103::1/126 dev eth1
+        - ip link set eth1 up
+        # Interface towards router02.tra02
+        - ip address add 10.102.103.2/24 dev eth2
+        - ip address add fc00:b:102::103:2/126 dev eth2
+        - ip link set eth2 up
+        # Interface towards eyeball01.tra03
+        - ip address add 192.168.3.1/24 dev eth3
+        - ip address add fc00:b:103:beef::1/64 dev eth3
+        - ip link set eth3 up
+        # Bird
+        - bird
+      binds:
+        - bird-configs/router01.tra03.conf:/etc/bird.conf
+
+    ############################################################################
+    ### EYEBALLS ###############################################################
+    ############################################################################
+
+    eyeball01.tra01:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Static network configuration
+        - ip address add 192.168.1.2/24 dev eth1
+        - ip address add fc00:b:101:beef::2/64 dev eth1
+        - ip -4 route replace default via 192.168.1.1
+        - ip -6 route replace default via fc00:b:101:beef::1
+        - ip link set eth1 up
+
+    eyeball01.tra02:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Static network configuration
+        - ip address add 192.168.2.2/24 dev eth1
+        - ip address add fc00:b:102:beef::2/64 dev eth1
+        - ip -4 route replace default via 192.168.2.1
+        - ip -6 route replace default via fc00:b:102:beef::1
+        - ip link set eth1 up
+
+    eyeball01.tra03:
+      kind: linux
+      image: alpine:latest
+      exec:
+        # Basic packages
+        - apk add nginx curl bash iproute2
+        # Web server
+        - bash -c "hostname > /var/www/localhost/htdocs/index.html"
+        - >
+          sed -i 's/return 404/root \/var\/www\/localhost\/htdocs/'
+          /etc/nginx/http.d/default.conf
+        - nginx
+        # Static network configuration
+        - ip address add 192.168.3.2/24 dev eth1
+        - ip address add fc00:b:103:beef::2/64 dev eth1
+        - ip -4 route replace default via 192.168.3.1
+        - ip -6 route replace default via fc00:b:103:beef::1
+        - ip link set eth1 up
+
+  ############################################################################
+  ### LINKS ##################################################################
+  ############################################################################
+
+  links:
+    # Servers to router in lab pop 1
+    - endpoints: ["router01.lab01:eth1", "server01.lab01:eth1"]
+    - endpoints: ["router01.lab01:eth2", "server02.lab01:eth1"]
+    - endpoints: ["router01.lab01:eth3", "server03.lab01:eth1"]
+
+    # Servers to router in lab pop 2
+    - endpoints: ["router01.lab02:eth1", "server01.lab02:eth1"]
+    - endpoints: ["router01.lab02:eth2", "server02.lab02:eth1"]
+    - endpoints: ["router01.lab02:eth3", "server03.lab02:eth1"]
+
+    # Lab routers to transit
+    - endpoints: ["router01.lab01:eth4", "router01.tra01:eth1"]
+    - endpoints: ["router01.lab02:eth4", "router01.tra03:eth1"]
+
+    # Transit links
+    - endpoints: ["router01.tra01:eth2", "router01.tra02:eth1"]
+
+    - endpoints: ["router01.tra02:eth2", "router02.tra02:eth2"]
+    - endpoints: ["router01.tra02:eth3", "router03.tra02:eth1"]
+    - endpoints: ["router02.tra02:eth3", "router03.tra02:eth2"]
+
+    - endpoints: ["router01.tra03:eth2", "router02.tra02:eth1"]
+
+    # Transit eyeballs
+    - endpoints: ["eyeball01.tra01:eth1", "router01.tra01:eth3"]
+    - endpoints: ["eyeball01.tra02:eth1", "router03.tra02:eth3"]
+    - endpoints: ["eyeball01.tra03:eth1", "router01.tra03:eth3"]
