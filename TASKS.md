@@ -60,27 +60,27 @@ You might want to work in different branches, based on `master`. Order of tasks 
 
 ### Task 1
 
-Your peering partners have raised concerns about the excessive number of prefixes you are announcing. Make sure not to advertise any prefixes longer than /24 for IPv4 and /48 for IPv6 from both POP locations. It is important that connectivity remains unaffected. You are only permitted to modify the configuration on router01.lab01 and router01.lab02.
+Your peering partners have raised concerns about the excessive number of prefixes you are announcing. Make sure not to advertise any prefixes longer than `/24` for IPv4 and `/48` for IPv6 from both POP locations. It is important that connectivity remains unaffected. You are only permitted to modify the configuration on `router01.lab01` and `router01.lab02`.
 
 ### Task 2
 
-Security team has highlighted a concern regarding BGP advertisements containing private autonomous system numbers 65001 and 65002 in the AS PATH. Ensure these ASNs are excluded from the AS PATH for all advertised routes. You are only permitted to update the configurations on router01.lab01 and router01.lab02.
+Security team has highlighted a concern regarding BGP advertisements containing private autonomous system numbers `65001` and `65002` in the AS PATH. Ensure these ASNs are excluded from the AS PATH for all advertised routes. You are only permitted to update the configurations on `router01.lab01` and `router01.lab02`.
 
 ### Task 3
 
-Requests from customers of AS 102 are currently distributed between two POPs. The planning team desires that POP #2 handles all requests to the network fc00:910b:1/48 from AS 102. Furthermore, ensure that requests from AS 101 to this network continue to be partially served by POP #1. You are not allowed to touch configuration of transit network.
+Requests from customers of AS 102 are currently distributed between two POPs. The planning team desires that POP #2 handles all requests to the network `fc00:910b:1/48` from AS 102. Furthermore, ensure that requests from AS 101 to this network continue to be partially served by POP #1. You are not allowed to touch configuration of transit network.
 
 ### Task 4
 
-You are a network engineer in AS 102. Your goal is to route all traffic destined for 10.200.2.0/24 through your peering partner AS 103 by preference. In the event that the connection to AS 103 is unavailable, AS 101 should serve as the backup route. You are only allowed to modify the configuration of devices within AS 102.
+You are a network engineer in AS 102. Your goal is to route all traffic destined for `10.200.2.0/24` through your peering partner AS 103 by preference. In the event that the connection to AS 103 is unavailable, AS 101 should serve as the backup route. You are only allowed to modify the configuration of devices within AS 102.
 
 ### Task 5
 
-Your POP #2 is experiencing high traffic. Configure server03.lab02 to handle all incoming traffic directed toward the anycast range 10.102.3.0/24 originating from outside this POP. You are only allowed to modify the configuration of server03.lab02.
+Your POP #2 is experiencing high traffic. Configure `server03.lab02` to handle all incoming traffic directed toward the anycast range `10.102.3.0/24` originating from outside this POP. You are only allowed to modify the configuration of `server03.lab02`.
 
 ### Task 6
 
-Security team has raised concerns regarding the security of certain services within the POP #1 colo-level anycast network, specifically the range 10.101.1.0/24. Ensure that this network is inaccessible from outside the POP while maintaining internal connectivity. Note that creating new firewall rules is not permitted.
+Security team has raised concerns regarding the security of certain services within the POP #1 colo-level anycast network, specifically the range `10.101.1.0/24`. Ensure that this network is inaccessible from outside the POP while maintaining internal connectivity. Note that creating new firewall rules is not permitted.
 
 ## Troubleshooting tasks
 
@@ -95,8 +95,32 @@ After this, **DO NOT** look into `bgp-lab.clab.yaml` or BIRD configuration files
 
 ### Task 1
 
-bla
+Investigate and resolve the issue preventing `server03.lab02` from handling anycast requests.
 
 ### Task 2
 
-bla
+Customers in AS 102 are experiencing issues accessing the web service at the IPv4 address `10.200.1.5`. However, the service functions correctly with the IPv6 address `fc00:910b:1::`. Diagnose and resolve the problem. Use `ping` from `eyeball01.tra02` to verify.
+
+### Task 3
+
+Requests to the colo-level anycast address `10.101.3.199` from `server01.lab01` are consistently directed to the same server, leading to overload. Identify the cause of this issue and resolve it.
+
+### Task 4
+
+`server02.lab01` never gets any anycast traffic for address `fc00:910b:2::`. Identify the cause of this issue and resolve it.
+
+### Task 5
+
+Identify and resolve the issue preventing `server01.lab01` from handling any anycast requests.
+
+### Task 6
+
+`server02.lab02` is unable to access the colo-level anycast service at the IP address `fc00:c001:2:1::`. Investigate the cause and resolve the issue.
+
+### Task 7
+
+Requests from customers of AS 101 to the anycast address `10.200.2.2` are consistently routing through POP #2 via AS 102, despite the proximity of POP #1. Investigate and resolve this issue.
+
+### Task 8
+
+Requests from customers of AS 103 to the anycast address `fc00:910b:1::` are consistently routing through POP #1 via AS 102, despite the proximity of POP #2. Investigate and resolve this issue.
