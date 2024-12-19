@@ -28,7 +28,7 @@ This guide sets up a virtual machine with 8GiB of RAM and a 10GiB virtual hard d
     DEBIAN_IMAGE_URL=https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-nocloud-arm64.qcow2
     DEBIAN_IMAGE_PATH=./disk.qcow2
 
-    BIOS_IMAGE_URL=http://ftp.de.debian.org/debian/pool/main/e/edk2/qemu-efi-aarch64_2024.11-1_all.deb
+    BIOS_IMAGE_URL=http://ftp.de.debian.org/debian/pool/main/e/edk2/qemu-efi-aarch64_2024.11-2_all.deb
     BIOS_IMAGE_PATH=./bios.deb
 
     # Download Debian and BIOS images
