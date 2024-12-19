@@ -26,7 +26,7 @@ topology:
         - sysctl net.ipv4.ip_forward=1
         - sysctl net.ipv6.conf.all.forwarding=1
         # ECMP hash policy
-        - sysctl net.ipv4.fib_multipath_hash_policy=1
+        - sysctl net.ipv4.fib_multipath_hash_policy=0
         - sysctl net.ipv6.fib_multipath_hash_policy=1
         # Loopback
         - ip address add 10.1.254.1/32 dev lo
@@ -57,7 +57,7 @@ topology:
       image: alpine:latest
       exec:
         # Basic packages
-        - apk add nginx curl bash iproute2 bird
+        - apk add nginx curl bash iproute2 bird iptables
         # Web server
         - bash -c "hostname > /var/www/localhost/htdocs/index.html"
         - >
@@ -81,6 +81,9 @@ topology:
         - ip address add 10.200.2.0/24 dev lo
         - ip address add fc00:910b:1::/64 dev lo
         - ip address add fc00:910b:2::/64 dev lo
+        # Tshoot
+        - iptables -A INPUT -p tcp --dport 179 -j DROP
+        - iptables -A OUTPUT -p tcp --dport 179 -j DROP
         # Bird
         - bird
       binds:
@@ -113,7 +116,7 @@ topology:
         # Global anycast
         - ip address add 10.200.2.0/24 dev lo
         - ip address add 10.200.3.0/24 dev lo
-        - ip address add fc00:910b:2::/64 dev lo
+        - ip address add fc00:910b:2::/48 dev lo
         - ip address add fc00:910b:3::/64 dev lo
         # Bird
         - bird
@@ -433,7 +436,7 @@ topology:
           /etc/nginx/http.d/default.conf
         - nginx
         # Forwarding
-        - sysctl net.ipv4.ip_forward=1
+        - sysctl net.ipv4.ip_forward=0
         - sysctl net.ipv6.conf.all.forwarding=1
         # ECMP hash policy
         - sysctl net.ipv4.fib_multipath_hash_policy=1
